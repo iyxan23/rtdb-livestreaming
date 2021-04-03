@@ -6,4 +6,24 @@
     android:layout_height="match_parent"
     tools:context=".StreamerActivity">
 
+    <Button
+        android:id="@+id/stream_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Streaming"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/stream_info"
+        style="@style/TextAppearance.MaterialComponents.Body2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Not streaming"
+        app:layout_constraintBottom_toTopOf="@+id/stream_button"
+        app:layout_constraintEnd_toEndOf="@+id/stream_button"
+        app:layout_constraintStart_toStartOf="@+id/stream_button" />
 </androidx.constraintlayout.widget.ConstraintLayout>
