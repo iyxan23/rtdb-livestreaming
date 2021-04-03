@@ -44,6 +44,7 @@ public class StreamerActivity extends AppCompatActivity {
             muted = !muted;
 
             stream_button.setText(muted ? "Start Streaming" : "Stop Streaming");
+            stream_info.setText(muted ? "Not streaming" : "Streaming audio");
 
             if (!muted) {
                 startStreaming();
