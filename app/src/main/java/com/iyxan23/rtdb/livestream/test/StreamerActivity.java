@@ -24,7 +24,7 @@ public class StreamerActivity extends AppCompatActivity {
     final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-    boolean muted = false;
+    boolean muted = true;
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference stream_reference = database.getReference("stream");
