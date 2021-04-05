@@ -137,6 +137,9 @@ public class ViewerActivity extends AppCompatActivity {
     protected void onDestroy() {
         audio_reference.child("audio").removeEventListener(audio_listener);
         audio_reference.child("viewers").child(push_key_user).removeValue();
+
+        audioTrack.stop();
+
         super.onDestroy();
     }
 
