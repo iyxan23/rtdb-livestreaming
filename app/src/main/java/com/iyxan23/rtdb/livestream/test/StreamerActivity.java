@@ -120,6 +120,8 @@ public class StreamerActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        muted = true;
+
         if (stream_thread != null) {
             stream_thread.interrupt();
         }
@@ -156,6 +158,8 @@ public class StreamerActivity extends AppCompatActivity {
 
                 stream_reference.child("audio").setValue(data);
             }
+
+            recorder.stop();
 
         });
 
