@@ -51,6 +51,9 @@ public class ViewerActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String room_id = intent.getStringExtra("room_id");
+
+        getSupportActionBar().setSubtitle("Room ID: " + room_id);
+
         audio_reference = database.getReference("stream").child(room_id);
 
         audioTrack = new AudioTrack(
