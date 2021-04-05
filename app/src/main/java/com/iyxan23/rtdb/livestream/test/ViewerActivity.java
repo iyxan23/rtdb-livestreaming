@@ -3,6 +3,7 @@ package com.iyxan23.rtdb.livestream.test;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -20,7 +21,7 @@ import com.google.firebase.database.ValueEventListener;
 public class ViewerActivity extends AppCompatActivity {
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference audio_reference = database.getReference("stream");
+    DatabaseReference audio_reference;
 
     final int sampleRate = 16000 ; // 44100 for music
     final int channelConfig = AudioFormat.CHANNEL_IN_MONO;
@@ -47,6 +48,10 @@ public class ViewerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_viewer);
+
+        Intent intent = getIntent();
+        String room_id = intent.getStringExtra("room_id");
+        audio_reference = database.getReference("stream").child(room_id);
 
         audioTrack = new AudioTrack(
                 AudioManager.STREAM_MUSIC,

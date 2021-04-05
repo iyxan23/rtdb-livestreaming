@@ -2,6 +2,7 @@ package com.iyxan23.rtdb.livestream.test;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -27,7 +28,7 @@ public class StreamerActivity extends AppCompatActivity {
     boolean muted = true;
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference stream_reference = database.getReference("stream");
+    DatabaseReference stream_reference;
 
     TextView stream_info;
     Button stream_button;
@@ -39,6 +40,13 @@ public class StreamerActivity extends AppCompatActivity {
 
         stream_info = findViewById(R.id.stream_info);
         stream_button = findViewById(R.id.stream_button);
+
+        Intent intent = getIntent();
+        String room_id = intent.getStringExtra("room_id");
+
+        stream_reference = database.getReference("stream").child(room_id);
+
+        getSupportActionBar().setSubtitle("Room ID: " + room_id);
 
         stream_button.setOnClickListener(v -> {
             muted = !muted;
