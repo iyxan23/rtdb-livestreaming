@@ -1,8 +1,11 @@
 package com.iyxan23.rtdb.livestream.test;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -10,6 +13,7 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -65,8 +69,21 @@ public class StreamerActivity extends AppCompatActivity {
         });
     }
 
+    Thread stream_thread;
+
+    @Override
+    protected void onDestroy() {
+        if (stream_thread != null) {
+            stream_thread.interrupt();
+        }
+
+        stream_reference.child("audio").removeValue();
+
+        super.onDestroy();
+    }
+
     private void startStreaming() {
-        new Thread(() -> {
+        stream_thread = new Thread(() -> {
             byte[] buffer = new byte[minBufSize];
 
             recorder = new AudioRecord(
@@ -93,6 +110,8 @@ public class StreamerActivity extends AppCompatActivity {
                 stream_reference.child("audio").setValue(data);
             }
 
-        }).start();
+        });
+
+        stream_thread.start();
     }
 }
