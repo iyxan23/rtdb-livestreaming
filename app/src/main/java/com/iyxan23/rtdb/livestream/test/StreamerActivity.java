@@ -78,6 +78,8 @@ public class StreamerActivity extends AppCompatActivity {
         }
     };
 
+    String room_id;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,7 +94,7 @@ public class StreamerActivity extends AppCompatActivity {
         stream_button = findViewById(R.id.stream_button);
 
         Intent intent = getIntent();
-        String room_id = intent.getStringExtra("room_id");
+        room_id = intent.getStringExtra("room_id");
 
         stream_reference = database.getReference("stream").child(room_id);
 
@@ -122,7 +124,7 @@ public class StreamerActivity extends AppCompatActivity {
             stream_thread.interrupt();
         }
 
-        stream_reference.child("audio").removeValue();
+        stream_reference.child(room_id).removeValue();
 
         super.onDestroy();
     }
