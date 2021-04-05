@@ -7,12 +7,21 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
+
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,13 +83,32 @@ public class MainActivity extends AppCompatActivity {
 
         builder.setView(editText);
         builder.setPositiveButton("Ok", (dialog, which) -> {
-            startActivity(
-                    new Intent(
-                            this,
-                            ViewerActivity.class
+            String room_id = editText.getText().toString();
 
-                    ).putExtra("room_id", editText.getText().toString())
-            );
+            // Check if room id exists
+
+            database.getReference(room_id)
+                    .addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        startActivity(
+                                new Intent(
+                                        MainActivity.this,
+                                        ViewerActivity.class
+
+                                ).putExtra("room_id", room_id)
+                        );
+                    } else {
+                        Toast.makeText(MainActivity.this, "Room with ID " + room_id + " doesn't exists", Toast.LENGTH_SHORT).show();
+                    }
+
+                    dialog.dismiss();
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) { }
+            });
         });
 
         builder.create().show();
