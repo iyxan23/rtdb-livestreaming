@@ -1,5 +1,6 @@
 package com.iyxan23.rtdb.livestream.test;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -15,10 +16,15 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StreamerActivity extends AppCompatActivity {
 
@@ -36,6 +42,42 @@ public class StreamerActivity extends AppCompatActivity {
 
     TextView stream_info;
     Button stream_button;
+
+    List<String> listeners;
+
+    ValueEventListener listeners_listener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot snapshot) {
+            TextView listeners_text = findViewById(R.id.listeners);
+
+            if (listeners == null) {
+                listeners = new ArrayList<>();
+            }
+
+            listeners.clear();
+
+            for (DataSnapshot child : snapshot.getChildren()) {
+                listeners.add(child.getValue(String.class));
+            }
+
+            TextView viewers_text = findViewById(R.id.viewers);
+            viewers_text.setText("Listeners: ");
+
+            boolean is_first = true;
+            for (String listener : listeners) {
+                if (!is_first) viewers_text.append(",");
+
+                viewers_text.append(listener);
+
+                is_first = false;
+            }
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError error) {
+            Toast.makeText(StreamerActivity.this, "Error while retreiving viewers: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +109,10 @@ public class StreamerActivity extends AppCompatActivity {
                 startStreaming();
             }
         });
+
+        stream_reference
+                .child("viewers")
+                .addValueEventListener(listeners_listener);
     }
 
     Thread stream_thread;

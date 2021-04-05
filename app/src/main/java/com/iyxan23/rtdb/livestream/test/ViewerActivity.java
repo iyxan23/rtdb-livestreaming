@@ -10,6 +10,7 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.os.Bundle;
 import android.util.Base64;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -17,6 +18,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ViewerActivity extends AppCompatActivity {
 
@@ -44,6 +48,42 @@ public class ViewerActivity extends AppCompatActivity {
         }
     };
 
+    List<String> viewers;
+
+    ValueEventListener viewers_listener = new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot snapshot) {
+            if (viewers == null) {
+                viewers = new ArrayList<>();
+            }
+
+            viewers.clear();
+
+            for (DataSnapshot child : snapshot.getChildren()) {
+                viewers.add(child.getValue(String.class));
+            }
+
+            TextView viewers_text = findViewById(R.id.viewers);
+            viewers_text.setText("Viewers: ");
+
+            boolean is_first = true;
+            for (String viewer : viewers) {
+                if (!is_first) viewers_text.append(",");
+
+                viewers_text.append(viewer);
+
+                is_first = false;
+            }
+        }
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError error) {
+            Toast.makeText(ViewerActivity.this, "Error while checking viewers: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    String push_key_user;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +95,25 @@ public class ViewerActivity extends AppCompatActivity {
         getSupportActionBar().setSubtitle("Room ID: " + room_id);
 
         audio_reference = database.getReference("stream").child(room_id);
+
+        push_key_user = audio_reference.child("viewers").push().getKey();
+
+        if (push_key_user == null) {
+            Toast.makeText(this, "Error: Push key is null", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        audio_reference
+                .child("viewers")
+                .child(push_key_user)
+                .setValue(
+                        getSharedPreferences("data", MODE_PRIVATE)
+                                .getString("name", "Unknown user")
+                );
+
+        audio_reference
+                .child("viewers")
+                .addValueEventListener(viewers_listener);
 
         audioTrack = new AudioTrack(
                 AudioManager.STREAM_MUSIC,
@@ -72,6 +131,7 @@ public class ViewerActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         audio_reference.child("audio").removeEventListener(audio_listener);
+        audio_reference.child("viewers").child(push_key_user).removeValue();
         super.onDestroy();
     }
 
