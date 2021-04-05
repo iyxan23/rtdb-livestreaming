@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
@@ -87,8 +88,9 @@ public class MainActivity extends AppCompatActivity {
 
             // Check if room id exists
 
-            database.getReference(room_id)
-                    .addValueEventListener(new ValueEventListener() {
+            DatabaseReference room_reference = database.getReference("stream").child(room_id);
+
+            ValueEventListener check_exists = new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     if (snapshot.exists()) {
@@ -99,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
 
                                 ).putExtra("room_id", room_id)
                         );
+
+                        room_reference.removeEventListener(this);
                     } else {
                         Toast.makeText(MainActivity.this, "Room with ID " + room_id + " doesn't exists", Toast.LENGTH_SHORT).show();
                     }
@@ -107,8 +111,11 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onCancelled(@NonNull DatabaseError error) { }
-            });
+                public void onCancelled(@NonNull DatabaseError error) {
+                }
+            };
+
+            room_reference.addListenerForSingleValueEvent(check_exists);
         });
 
         builder.create().show();
