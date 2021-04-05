@@ -9,8 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.security.SecureRandom;
-import java.util.UUID;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     // https://stackoverflow.com/a/157202
 
     final String characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    SecureRandom random = new SecureRandom();
+    Random random = new Random();
 
     String randomString(int len){
         StringBuilder sb = new StringBuilder(len);
