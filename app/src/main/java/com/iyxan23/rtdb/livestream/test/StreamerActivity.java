@@ -38,6 +38,11 @@ public class StreamerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_streamer);
 
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_DENIED) {
+            Toast.makeText(this, "We need audio permission to stream your mic", Toast.LENGTH_SHORT).show();
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.RECORD_AUDIO}, 1);
+        }
+
         stream_info = findViewById(R.id.stream_info);
         stream_button = findViewById(R.id.stream_button);
 
