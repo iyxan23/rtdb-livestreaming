@@ -60,14 +60,13 @@ public class StreamerActivity extends AppCompatActivity {
                 listeners.add(child.getValue(String.class));
             }
 
-            TextView viewers_text = findViewById(R.id.viewers);
-            viewers_text.setText("Listeners: ");
+            listeners_text.setText("Listeners: ");
 
             boolean is_first = true;
             for (String listener : listeners) {
-                if (!is_first) viewers_text.append(",");
+                if (!is_first) listeners_text.append(",");
 
-                viewers_text.append(listener);
+                listeners_text.append(listener);
 
                 is_first = false;
             }
