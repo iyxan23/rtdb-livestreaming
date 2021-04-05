@@ -38,6 +38,11 @@ public class ViewerActivity extends AppCompatActivity {
     ValueEventListener audio_listener = new ValueEventListener() {
         @Override
         public void onDataChange(@NonNull DataSnapshot snapshot) {
+            if (!snapshot.exists()) {
+                Toast.makeText(ViewerActivity.this, "Streamer has stopped streaming", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+            
             byte[] data = Base64.decode(snapshot.getValue(String.class), Base64.URL_SAFE);
             new Thread(() -> toSpeaker(data)).start();
         }
