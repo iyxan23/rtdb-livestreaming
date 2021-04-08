@@ -3,4 +3,5 @@ An experimental project to see if you can livestream media using Firebase's Real
 
 ## Implemented
  - [x] Audio (legacy)
+ - [x] Two-way audio (or in simpler terms, Calling)
  - [ ] Video
