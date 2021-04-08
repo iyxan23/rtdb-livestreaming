@@ -100,7 +100,8 @@ public class CallActivity extends AppCompatActivity {
                             .child(self_username);
 
             // Set the calling text
-            calling.setText(other_side + " is calling you");
+            calling.setText(other_side);
+            calling.append(getString(R.string.is_calling_you));
 
         } else if (call_type == CallType.CALLER) {
 
@@ -114,6 +115,12 @@ public class CallActivity extends AppCompatActivity {
 
             // Push the call ID, and set the call reference
             call_id = call_ref.push().getKey();
+
+            if (call_id == null) {
+                Toast.makeText(this, "Error while pushing", Toast.LENGTH_LONG).show();
+                finish();
+            }
+
             call_ref = call_ref.child(call_id);
 
             // Set the child "caller" in the call reference as our username
@@ -132,7 +139,8 @@ public class CallActivity extends AppCompatActivity {
 
                         // Change UI state
                         Toast.makeText(CallActivity.this, other_side + " picked up the call", Toast.LENGTH_SHORT).show();
-                        calling.setText("Talking to " + other_side);
+                        calling.setText(getString(R.string.talking_to));
+                        calling.append(other_side);
 
                         // Start the call
                         in_call = true;
@@ -152,18 +160,20 @@ public class CallActivity extends AppCompatActivity {
             });
         }
 
-        // Set the calling textview to be "Calling " + other_side
+        // Set the calling TextView to be "Calling " + other_side
         calling.append(other_side);
     }
 
     @Override
     protected void onDestroy() {
         // Exit gracefully
-        listen_ref.removeEventListener(audio_listener);
-        audioTrack.stop();
-        muted = true;
+        if (in_call) {
+            listen_ref.removeEventListener(audio_listener);
+            audioTrack.stop();
+            muted = true;
 
-        if (stream_thread != null) stream_thread.interrupt();
+            if (stream_thread != null) stream_thread.interrupt();
+        }
 
         super.onDestroy();
     }

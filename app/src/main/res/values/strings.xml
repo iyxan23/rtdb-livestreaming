@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">RTDB Livestream Test</string>
+    <string name="is_calling_you"> is calling you</string>
+    <string name="talking_to">"Talking to "</string>
 </resources>
