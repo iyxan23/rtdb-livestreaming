@@ -25,80 +25,122 @@ import java.nio.charset.StandardCharsets;
 
 public class CallActivity extends AppCompatActivity {
 
+    /**
+     * Used to identify who are we? the caller or the receiver?
+     */
     public enum CallType {
         RECEIVER,
         CALLER
     }
 
-    boolean IN_CALL = false;
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Stuff important for the call                                                               //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    String call_id;
-    String other_side;
-    String self_username;
+    String call_id;         // The call id
+    String other_side;      // The other side's username
+    String self_username;   // Our username
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference call_ref;
-    DatabaseReference stream_ref;
-    DatabaseReference listen_ref;
+
+    DatabaseReference call_ref;     // Reference to the call (/calls/USERNAME/CALL_ID)
+    DatabaseReference stream_ref;   // Reference to a child that we should stream to (/calls/USERNAME/CALL_ID/OUR_USERNAME)
+    DatabaseReference listen_ref;   // Reference to a child that we should listen to (/calls/USERNAME/CALL_ID/THEIR_USERNAME)
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Audio configuration                                                                        //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
 
     final int sampleRate = 16000 ; // 44100 for music
     final int channelConfig = AudioFormat.CHANNEL_IN_MONO;
     final int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-    boolean muted = true;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Call states                                                                                //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    boolean muted = true;    // Are we muted?
+    boolean in_call = false; // Are we in call?
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_call);
 
+        // Get our username
         self_username = getSharedPreferences("data", MODE_PRIVATE).getString("name", "Unknown");
 
+        // Get the intent's extras
         Intent intent = getIntent();
 
+        // Get the call type, are we a caller or the receiver?
         CallType call_type = CallType.valueOf(intent.getStringExtra("call_type"));
 
+        TextView calling = findViewById(R.id.calling);
+
+        // Check are we the caller or the receiver?
         if (call_type == CallType.RECEIVER) {
+
+            // Get the call id and the caller
             call_id = intent.getStringExtra("call_id");
             other_side = intent.getStringExtra("caller");
 
+            // Set the UI state to "waiting to pick up"
             findViewById(R.id.mute_call).setVisibility(View.GONE);
 
             FloatingActionButton end_call = findViewById(R.id.end_call);
             end_call.setBackgroundColor(0xFF0AAF12);
             end_call.setImageResource(R.drawable.ic_call);
 
+            // Set the call reference
             call_ref = database
                             .getReference("calls")
                             .child(self_username);
 
-        } else if (call_type == CallType.CALLER) {
-            TextView calling = findViewById(R.id.calling);
+            // Set the calling text
+            calling.setText(other_side + " is calling you");
 
+        } else if (call_type == CallType.CALLER) {
+
+            // Get the receiver
             other_side = intent.getStringExtra("receiver");
 
+            // Get the call reference
             call_ref = database
                             .getReference("calls")
                             .child(other_side);
 
+            // Push the call ID, and set the call reference
             call_id = call_ref.push().getKey();
             call_ref = call_ref.child(call_id);
 
+            // Set the child "caller" in the call reference as our username
             call_ref.child("caller").setValue(self_username);
 
-            calling.append(other_side);
-
+            // Set the stream and listen references
             stream_ref = call_ref.child(self_username);
             listen_ref = call_ref.child(other_side);
 
+            // Check if the receiver picked up the call
             listen_ref.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    // Check if this snapshot exists / user picked up the call
                     if (snapshot.exists()) {
+
+                        // Change UI state
+                        Toast.makeText(CallActivity.this, other_side + " picked up the call", Toast.LENGTH_SHORT).show();
+                        calling.setText("Talking to " + other_side);
+
+                        // Start the call
+                        in_call = true;
+
                         startStreaming();
                         startListening();
 
+                        // Don't forget to remove this listener
                         listen_ref.removeEventListener(this);
                     }
                 }
@@ -109,22 +151,27 @@ public class CallActivity extends AppCompatActivity {
                 }
             });
         }
+
+        // Set the calling textview to be "Calling " + other_side
+        calling.append(other_side);
     }
 
     @Override
     protected void onDestroy() {
+        // Exit gracefully
         listen_ref.removeEventListener(audio_listener);
         audioTrack.stop();
-        if (stream_thread != null) stream_thread.interrupt();
         muted = true;
+
+        if (stream_thread != null) stream_thread.interrupt();
 
         super.onDestroy();
     }
 
     public void endCall(View view) {
-        if (!IN_CALL) {
+        if (!in_call) {
             // This user picked up the call, start streaming
-            IN_CALL = true;
+            in_call = true;
 
             stream_ref = call_ref.child(self_username);
             listen_ref = call_ref.child(other_side);
@@ -132,7 +179,16 @@ public class CallActivity extends AppCompatActivity {
             startStreaming();
             startListening();
 
+            // Restore the UI to the talking state
+
+            findViewById(R.id.mute_call).setVisibility(View.VISIBLE);
+
+            FloatingActionButton end_call = findViewById(R.id.end_call);
+            end_call.setBackgroundColor(0xFFCD1A14);
+            end_call.setImageResource(R.drawable.ic_call_end);
+
         } else {
+            // User ended the call, remove everything
             call_ref.removeValue();
 
             finish();
@@ -144,9 +200,13 @@ public class CallActivity extends AppCompatActivity {
     AudioRecord recorder;
 
     private void startStreaming() {
+        // Set the stream thread
         stream_thread = new Thread(() -> {
+
+            // Allocate a new buffer for our audio
             byte[] buffer = new byte[minBufSize];
 
+            // Initialize the recorder
             recorder = new AudioRecord(
                     MediaRecorder.AudioSource.MIC,
                     sampleRate,
@@ -155,15 +215,19 @@ public class CallActivity extends AppCompatActivity {
                     minBufSize * 10
             );
 
+            // Start the recorder
             recorder.startRecording();
 
+            // Are we not muted?
             while (!muted) {
                 if (Thread.interrupted()) {
                     break;
                 }
 
-                minBufSize = recorder.read(buffer, 0, buffer.length);
+                // Read an audio frame
+                recorder.read(buffer, 0, buffer.length);
 
+                // Encode it as base64
                 String data = new String(
                         Base64.encode(
                                 buffer,
@@ -172,9 +236,11 @@ public class CallActivity extends AppCompatActivity {
                         StandardCharsets.UTF_8
                 );
 
+                // Set the stream reference to the audio frame, and let the other side receive it
                 stream_ref.setValue(data);
             }
 
+            // We're muted, stop the recorder
             recorder.stop();
 
         });
@@ -188,7 +254,7 @@ public class CallActivity extends AppCompatActivity {
         @Override
         public void onDataChange(@NonNull DataSnapshot snapshot) {
             if (!snapshot.exists()) {
-                Toast.makeText(CallActivity.this, "Streamer has stopped streaming", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CallActivity.this, "Other side has stopped streaming, end our call", Toast.LENGTH_SHORT).show();
                 finish();
             }
 
