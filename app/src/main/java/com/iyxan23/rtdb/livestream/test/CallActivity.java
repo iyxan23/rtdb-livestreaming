@@ -82,6 +82,9 @@ public class CallActivity extends AppCompatActivity {
                             .getReference("calls")
                             .child(other_side);
 
+            call_id = call_ref.push().getKey();
+            call_ref = call_ref.child(call_id);
+
             call_ref.child("caller").setValue(self_username);
 
             calling.append(other_side);
