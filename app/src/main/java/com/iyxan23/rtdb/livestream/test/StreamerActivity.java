@@ -146,6 +146,10 @@ public class StreamerActivity extends AppCompatActivity {
             recorder.startRecording();
 
             while (!muted) {
+                if (Thread.interrupted()) {
+                    break;
+                }
+
                 minBufSize = recorder.read(buffer, 0, buffer.length);
 
                 String data = new String(
